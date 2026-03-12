@@ -206,3 +206,30 @@ npm run typecheck
 npm test
 cargo check --manifest-path src-tauri/Cargo.toml
 ```
+
+## Xcode Smoke Tests
+
+Xcode / xcodebuild から macOS app の smoke test を回すために、`xcode-smoke-tests/` に Swift Package の test harness を置いてあります。
+
+CLI で回す:
+
+```bash
+npm run test:xcode-smoke
+```
+
+軽い実行確認だけなら:
+
+```bash
+npm run test:swift-smoke
+```
+
+Xcode.app で開く場合:
+
+1. `xcode-smoke-tests/Package.swift` を Xcode で開く
+2. scheme `GCSmokeTests` を選ぶ
+3. Test を実行する
+
+内容:
+
+- release app bundle に `node-sidecar` と bundled assets が入っているか
+- release app が起動して `http://127.0.0.1:3131/api/health` を返すか

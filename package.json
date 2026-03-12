@@ -12,6 +12,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/server.js",
     "test": "vitest run",
+    "test:xcode-smoke": "cd xcode-smoke-tests && xcodebuild test -scheme GCSmokeTests -destination 'platform=macOS'",
+    "test:swift-smoke": "swift test --package-path xcode-smoke-tests",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",

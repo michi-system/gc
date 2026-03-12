@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/.build/arm64-apple-macosx/debug/GCSmokeTestsTests.build/master.swiftdeps"
+  },
+  "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/Tests/GCSmokeTestsTests/ReleaseAppSmokeTests.swift": {
+    "dependencies": "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/.build/arm64-apple-macosx/debug/GCSmokeTestsTests.build/ReleaseAppSmokeTests.d",
+    "object": "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/.build/arm64-apple-macosx/debug/GCSmokeTestsTests.build/ReleaseAppSmokeTests.swift.o",
+    "swiftmodule": "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/.build/arm64-apple-macosx/debug/GCSmokeTestsTests.build/ReleaseAppSmokeTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/.build/arm64-apple-macosx/debug/GCSmokeTestsTests.build/ReleaseAppSmokeTests.swiftdeps",
+    "diagnostics": "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/.build/arm64-apple-macosx/debug/GCSmokeTestsTests.build/ReleaseAppSmokeTests.dia"
+  }
+}

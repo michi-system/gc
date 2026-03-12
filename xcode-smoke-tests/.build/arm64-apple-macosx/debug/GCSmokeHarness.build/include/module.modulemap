@@ -1,0 +1,3 @@
+module GCSmokeHarness {
+    header "/Users/tadamichikimura/Downloads/dev-HQ/gc/xcode-smoke-tests/.build/arm64-apple-macosx/debug/GCSmokeHarness.build/include/GCSmokeHarness-Swift.h"
+}
