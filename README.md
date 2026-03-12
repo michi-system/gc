@@ -205,7 +205,31 @@ GitHub Actions:
 npm run typecheck
 npm test
 cargo check --manifest-path src-tauri/Cargo.toml
+npm run test:tauri-cli-smoke
 ```
+
+## Tauri CLI Smoke Test
+
+Xcode.app を開かずに、CLI だけで bundled macOS app の起動確認をしたい場合はこれを使います。
+
+前提:
+
+```bash
+npm run tauri:build:adhoc
+```
+
+実行:
+
+```bash
+npm run test:tauri-cli-smoke
+```
+
+内容:
+
+- headless smoke mode で release binary を CLI から直接起動する
+- sidecar と bundled assets は `GC Console.app` の中身を使う
+- `http://127.0.0.1:3131/api/health` が返るまで待つ
+- dashboard HTML に `GC Console` が含まれることを確認する
 
 ## Xcode Smoke Tests
 
