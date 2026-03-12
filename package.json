@@ -1,0 +1,36 @@
+{
+  "name": "gc-local-automation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:tauri": "node scripts/prepare-tauri-node.mjs",
+    "check:macos-release": "node scripts/check-macos-release.mjs",
+    "macos:identities": "node scripts/list-macos-identities.mjs",
+    "verify:macos-release": "node scripts/verify-macos-release.mjs",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/server.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:adhoc": "APPLE_SIGNING_IDENTITY=- node scripts/print-macos-release-context.mjs && npm run tauri:build && node scripts/postprocess-macos-adhoc.mjs",
+    "tauri:build:signed": "node scripts/check-macos-release.mjs && node scripts/print-macos-release-context.mjs && npm run tauri:build",
+    "github:release:prepare": "npm run tauri:build:adhoc && node scripts/package-github-release.mjs"
+  },
+  "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.6.2",
+    "express": "^4.21.2",
+    "googleapis": "^148.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.14",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}

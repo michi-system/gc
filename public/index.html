@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GC Console</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">GC</div>
+          <div>
+            <p class="eyebrow">macOS prototype</p>
+            <h1>GC Console</h1>
+          </div>
+        </div>
+
+        <div id="connection-chip" class="connection-chip">Google未接続</div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="summary">見取りサマリー</button>
+          <button class="nav-item" data-view="inbox">未処理</button>
+          <button class="nav-item" data-view="table">一覧</button>
+          <button class="nav-item" data-view="calendar">カレンダー</button>
+          <button class="nav-item" data-view="settings">設定</button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <p class="sidebar-copy">未処理を安全にさばき、処理済みも後から一覧できる業務コンソール。</p>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="toolbar">
+          <div class="toolbar-copy">
+            <p id="view-eyebrow" class="toolbar-eyebrow">Overview</p>
+            <div>
+              <h2 id="view-title">見取りサマリー</h2>
+              <p id="view-subtitle" class="toolbar-subtitle">未処理と処理済みをまとめて俯瞰します。</p>
+            </div>
+          </div>
+          <div class="toolbar-actions">
+            <button id="connect-google" class="secondary">Googleに接続</button>
+            <button id="run-sync" class="primary">同期</button>
+          </div>
+        </header>
+
+        <main class="stage">
+          <section id="summary-view" class="view active">
+            <div class="hero-grid">
+              <article id="summary-hero" class="glass-panel hero-panel"></article>
+              <article id="summary-health" class="glass-panel health-panel"></article>
+            </div>
+            <div id="summary-metrics" class="metric-grid"></div>
+            <div class="content-grid">
+              <article id="summary-backlog" class="glass-panel"></article>
+              <article id="summary-issues" class="glass-panel"></article>
+              <article id="summary-recent" class="glass-panel span-two"></article>
+            </div>
+          </section>
+
+          <section id="inbox-view" class="view">
+            <div class="view-toolbar">
+              <div class="control-group">
+                <label for="inbox-filter">表示</label>
+                <select id="inbox-filter">
+                  <option value="all">すべて</option>
+                  <option value="review">要確認のみ</option>
+                  <option value="actionable">そのまま進められる</option>
+                  <option value="waiting">送信待ち</option>
+                  <option value="error">エラー</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="inbox-order">並び順</label>
+                <select id="inbox-order">
+                  <option value="oldest">古い順</option>
+                  <option value="newest">新しい順</option>
+                </select>
+              </div>
+            </div>
+            <div id="inbox-groups" class="day-stack"></div>
+          </section>
+
+          <section id="table-view" class="view">
+            <div class="view-toolbar dense">
+              <div class="control-group grow">
+                <label for="table-search">検索</label>
+                <input id="table-search" type="search" placeholder="生徒名、コード、タイトルで検索" />
+              </div>
+              <div class="control-group">
+                <label for="table-status">状態</label>
+                <select id="table-status">
+                  <option value="all">すべて</option>
+                  <option value="pending_enrichment">不足あり</option>
+                  <option value="ready_to_open">そのまま進められる</option>
+                  <option value="awaiting_user_submit">送信待ち</option>
+                  <option value="submitted_confirmed">送信済み</option>
+                  <option value="manual_review">要確認</option>
+                  <option value="error">エラー</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="table-type">種別</label>
+                <select id="table-type">
+                  <option value="all">すべて</option>
+                  <option value="coaching">コーチング</option>
+                  <option value="teaching">ティーチング</option>
+                  <option value="other">その他</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-shell glass-panel">
+              <table>
+                <thead>
+                  <tr>
+                    <th>日付</th>
+                    <th>時刻</th>
+                    <th>生徒</th>
+                    <th>種別</th>
+                    <th>詳細</th>
+                    <th>追加報告</th>
+                    <th>申請状態</th>
+                    <th>Gmail</th>
+                    <th>カレンダー</th>
+                  </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="calendar-view" class="view">
+            <div class="view-toolbar dense">
+              <div class="month-switcher">
+                <button id="calendar-prev" class="secondary">前の月</button>
+                <div id="calendar-month-label" class="month-label"></div>
+                <button id="calendar-next" class="secondary">次の月</button>
+              </div>
+              <div class="legend">
+                <span><i class="legend-dot pending"></i>未処理</span>
+                <span><i class="legend-dot review"></i>要確認</span>
+                <span><i class="legend-dot done"></i>送信済み</span>
+              </div>
+            </div>
+
+            <div class="calendar-layout">
+              <article class="glass-panel">
+                <div class="calendar-weekdays">
+                  <span>月</span>
+                  <span>火</span>
+                  <span>水</span>
+                  <span>木</span>
+                  <span>金</span>
+                  <span>土</span>
+                  <span>日</span>
+                </div>
+                <div id="calendar-grid" class="calendar-grid"></div>
+              </article>
+              <article id="calendar-day-panel" class="glass-panel day-panel"></article>
+            </div>
+          </section>
+
+          <section id="settings-view" class="view">
+            <div class="settings-grid">
+              <article class="glass-panel">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">Connection</p>
+                    <h3>Google連携</h3>
+                  </div>
+                  <span id="oauth-status" class="badge">読み込み中</span>
+                </div>
+                <p class="panel-copy">Gmail と Calendar に使う Google アカウントをここで接続します。</p>
+                <button id="settings-connect-google" class="secondary">Googleに接続</button>
+              </article>
+
+              <article class="glass-panel">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">Profile</p>
+                    <h3>コーチ情報</h3>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>コーチ名</span>
+                    <input id="coach-name" type="text" />
+                  </label>
+                  <label class="field">
+                    <span>コーチコード</span>
+                    <input id="coach-code" type="text" />
+                  </label>
+                  <label class="field span-two">
+                    <span>メールアドレス</span>
+                    <input id="coach-email" type="email" />
+                  </label>
+                </div>
+              </article>
+
+              <article class="glass-panel span-two">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">Calendar</p>
+                    <h3>対象カレンダー</h3>
+                  </div>
+                </div>
+                <p class="panel-copy">業務に使うカレンダーを名前で選びます。ID は表示しません。</p>
+                <div id="calendar-options" class="selection-grid"></div>
+              </article>
+
+              <article class="glass-panel span-two">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">Students</p>
+                    <h3>生徒台帳</h3>
+                  </div>
+                </div>
+                <p class="panel-copy">生徒情報は完全手動管理です。一括貼り付け前提にせず、まずはここで追加・編集します。</p>
+                <form id="student-form" class="student-form">
+                  <label class="field">
+                    <span>生徒名</span>
+                    <input id="student-name-input" type="text" required />
+                  </label>
+                  <label class="field">
+                    <span>生徒コード</span>
+                    <input id="student-code-input" type="text" required />
+                  </label>
+                  <label class="field">
+                    <span>別名</span>
+                    <input id="student-aliases-input" type="text" placeholder="カンマ区切り" />
+                  </label>
+                  <label class="field">
+                    <span>引き継ぎ</span>
+                    <select id="student-handoff-input">
+                      <option value="none">なし</option>
+                      <option value="advance_premium">advance / premium</option>
+                      <option value="coach_change">coach change</option>
+                      <option value="substitute">substitute</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>既定種別</span>
+                    <select id="student-type-input">
+                      <option value="coaching">coaching</option>
+                      <option value="teaching">teaching</option>
+                      <option value="other">other</option>
+                    </select>
+                  </label>
+                  <button class="primary" type="submit">生徒を追加</button>
+                </form>
+                <div id="student-list" class="student-stack"></div>
+              </article>
+
+              <article class="glass-panel span-two">
+                <details class="advanced-details">
+                  <summary>開発用の詳細設定</summary>
+                  <div class="advanced-grid">
+                    <label class="field">
+                      <span>OAuth credentials path</span>
+                      <input id="credentials-path" type="text" placeholder=".local/oauth/client_secret.json" />
+                    </label>
+                    <label class="field">
+                      <span>Timezone</span>
+                      <input id="timezone" type="text" />
+                    </label>
+                    <label class="field">
+                      <span>同期日数</span>
+                      <input id="sync-window-days" type="number" min="1" />
+                    </label>
+                    <label class="field">
+                      <span>Gmail query / 作業報告</span>
+                      <input id="query-work-report" type="text" />
+                    </label>
+                    <label class="field">
+                      <span>Gmail query / 日程変更</span>
+                      <input id="query-schedule-change" type="text" />
+                    </label>
+                    <label class="field">
+                      <span>Gmail query / 引き継ぎ</span>
+                      <input id="query-handoff" type="text" />
+                    </label>
+                  </div>
+                </details>
+                <div class="settings-actions">
+                  <button id="save-config" class="primary">設定を保存</button>
+                </div>
+              </article>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div id="inspector-overlay" class="inspector-overlay"></div>
+    <aside id="task-inspector" class="inspector">
+      <div class="inspector-header">
+        <div>
+          <p class="eyebrow">Task detail</p>
+          <h3 id="inspector-title">詳細</h3>
+        </div>
+        <button id="inspector-close" class="ghost">閉じる</button>
+      </div>
+      <div id="inspector-body" class="inspector-body"></div>
+      <div class="inspector-actions">
+        <button id="inspector-save" class="secondary">不足項目を保存</button>
+        <button id="inspector-open" class="primary">フォームを開く</button>
+      </div>
+    </aside>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
