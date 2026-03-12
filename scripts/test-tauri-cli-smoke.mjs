@@ -17,6 +17,7 @@ const dashboardUrl = process.env.GC_SMOKE_DASHBOARD_URL || "http://127.0.0.1:313
 const timeoutMs = Number.parseInt(process.env.GC_SMOKE_TIMEOUT_MS || "30000", 10);
 
 let appProcess = null;
+let appPid = null;
 
 function ensureExists(path, label) {
   if (!existsSync(path)) {
@@ -111,11 +112,28 @@ async function waitForHealthcheck() {
 }
 
 async function cleanup() {
-  if (appProcess && !appProcess.killed) {
-    appProcess.kill("SIGTERM");
+  if (appPid) {
+    try {
+      process.kill(-appPid, "SIGTERM");
+    } catch {
+      try {
+        process.kill(appPid, "SIGTERM");
+      } catch {}
+    }
+
     await sleep(1000);
-    if (appProcess.exitCode === null && appProcess.signalCode === null) {
-      appProcess.kill("SIGKILL");
+
+    try {
+      process.kill(-appPid, 0);
+      try {
+        process.kill(-appPid, "SIGKILL");
+      } catch {
+        try {
+          process.kill(appPid, "SIGKILL");
+        } catch {}
+      }
+    } catch {
+      // Process group is already gone.
     }
   }
   await terminateProcessesOnPort3131();
@@ -141,15 +159,11 @@ async function main() {
       GC_SMOKE_NODE_PATH: nodeSidecarPath,
       GC_SMOKE_BACKEND_ROOT: bundledBackendRoot,
     },
-    stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
+    stdio: ["ignore", "ignore", "ignore"],
   });
-
-  appProcess.stdout?.on("data", (chunk) => {
-    stdout += chunk.toString();
-  });
-  appProcess.stderr?.on("data", (chunk) => {
-    stderr += chunk.toString();
-  });
+  appPid = appProcess.pid ?? null;
+  appProcess.unref();
 
   try {
     await waitForHealthcheck();
