@@ -1,0 +1,41 @@
+{
+  "manifest_version": 2,
+  "name": "GC Greenfield Zen Bridge",
+  "version": "0.1.1",
+  "description": "Autofill Google Forms from GC Greenfield inside Zen/Firefox.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "http://127.0.0.1:3141/*",
+    "http://localhost:3141/*",
+    "https://docs.google.com/forms/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://127.0.0.1:3141/*",
+        "http://localhost:3141/*"
+      ],
+      "js": ["content-localhost.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://docs.google.com/forms/*"
+      ],
+      "js": ["content-google-form.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "gc-greenfield-zen-unlisted@local",
+      "data_collection_permissions": {
+        "required": ["personallyIdentifyingInfo"]
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gc.greenfield.server</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>mkdir -p /Users/tadamichikimura/gc-greenfield-public/.local/logs &amp;&amp; cd /Users/tadamichikimura/gc-greenfield-public &amp;&amp; npm run build &gt;&gt;/Users/tadamichikimura/gc-greenfield-public/.local/logs/server-build.log 2&gt;&amp;1 &amp;&amp; BASE_URL=https://gc.azus.tokyo exec /usr/bin/env node /Users/tadamichikimura/gc-greenfield-public/dist/server.js &gt;&gt;/Users/tadamichikimura/gc-greenfield-public/.local/logs/server.log 2&gt;&amp;1</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/tadamichikimura/gc-greenfield-public</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/tadamichikimura/gc-greenfield-public/.local/logs/launchd-server.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/tadamichikimura/gc-greenfield-public/.local/logs/launchd-server.err.log</string>
+</dict>
+</plist>

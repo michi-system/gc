@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gc.greenfield.tunnel</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>mkdir -p /Users/tadamichikimura/gc-greenfield-public/.local/logs &amp;&amp; exec /opt/homebrew/bin/cloudflared tunnel --config /Users/tadamichikimura/gc-greenfield-public/cloudflared-gc-console.yml run gc-console &gt;&gt;/Users/tadamichikimura/gc-greenfield-public/.local/logs/tunnel.log 2&gt;&amp;1</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/tadamichikimura/gc-greenfield-public</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/tadamichikimura/gc-greenfield-public/.local/logs/launchd-tunnel.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/tadamichikimura/gc-greenfield-public/.local/logs/launchd-tunnel.err.log</string>
+</dict>
+</plist>

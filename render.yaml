@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: gc-greenfield
+    runtime: docker
+    plan: starter
+    rootDir: greenfield
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: gc-greenfield-data
+      mountPath: /var/data/gc-greenfield
+      sizeGB: 10
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BASE_URL
+        sync: false
+      - key: GC_GREENFIELD_DATA_DIR
+        value: /var/data/gc-greenfield
+      - key: GC_GREENFIELD_CHROME_PATH
+        value: /usr/bin/chromium
+      - key: GC_GREENFIELD_SESSION_SECRET
+        generateValue: true

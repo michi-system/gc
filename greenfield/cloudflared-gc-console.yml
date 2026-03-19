@@ -1,0 +1,7 @@
+tunnel: f2d1b6c9-bbfe-4801-84ef-e9133010ed30
+credentials-file: /Users/tadamichikimura/.cloudflared/f2d1b6c9-bbfe-4801-84ef-e9133010ed30.json
+
+ingress:
+  - hostname: gc.azus.tokyo
+    service: http://127.0.0.1:3141
+  - service: http_status:404

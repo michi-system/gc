@@ -1,0 +1,5 @@
+node_modules
+dist
+.local
+tmp-debug-*.mjs
+npm-debug.log*

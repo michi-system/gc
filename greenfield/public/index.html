@@ -1,0 +1,2017 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GC Console</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #edf2f5;
+        --surface-1: rgba(255, 255, 255, 0.82);
+        --surface-2: rgba(248, 250, 252, 0.92);
+        --surface-3: rgba(243, 246, 248, 0.92);
+        --surface-strong: #ffffff;
+        --panel: var(--surface-1);
+        --panel-strong: var(--surface-strong);
+        --border: rgba(15, 23, 42, 0.09);
+        --border-strong: rgba(22, 50, 79, 0.16);
+        --ink: #182234;
+        --muted: #647286;
+        --accent: #183552;
+        --accent-soft: #dce7ee;
+        --danger-bg: #fbe4df;
+        --danger-text: #9b2c1a;
+        --warn-bg: #fff0dc;
+        --warn-text: #b86b13;
+        --ok-bg: #deefe4;
+        --ok-text: #1d6a3a;
+        --radius-xl: 22px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+        --radius-sm: 12px;
+        --shadow: 0 20px 48px rgba(23, 32, 51, 0.08);
+        --shadow-soft: 0 12px 28px rgba(23, 32, 51, 0.06);
+        --font-ui: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+        --font-ui-jp: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+        font-family: var(--font-ui);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(178, 204, 220, 0.44), transparent 34%),
+          radial-gradient(circle at bottom right, rgba(220, 228, 214, 0.28), transparent 26%),
+          var(--bg);
+        color: var(--ink);
+        overflow: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: 236px minmax(0, 1fr);
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .sidebar {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        padding: 18px 14px;
+        border-right: 1px solid var(--border);
+        background: rgba(244, 247, 248, 0.88);
+        backdrop-filter: blur(18px);
+        gap: 14px;
+        min-width: 0;
+        height: 100vh;
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+
+      .sidebar-top,
+      .sidebar-nav {
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .sidebar-top {
+        align-content: start;
+      }
+
+      .brand-mark,
+      .settings-button,
+      .nav-button {
+        border: 1px solid var(--border);
+        background: var(--surface-1);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .brand-mark {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        display: grid;
+        place-items: center;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .nav-button,
+      .settings-button {
+        width: 100%;
+        border-radius: var(--radius-lg);
+        padding: 12px 14px;
+        display: grid;
+        grid-template-columns: 28px auto 1fr;
+        gap: 10px;
+        align-items: center;
+        justify-items: start;
+        cursor: pointer;
+        color: var(--accent);
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .nav-button:hover,
+      .settings-button:hover {
+        background: var(--surface-strong);
+      }
+
+      .nav-button.active {
+        background: var(--surface-strong);
+        border-color: var(--border-strong);
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.9),
+          0 0 24px rgba(157, 196, 220, 0.24),
+          0 14px 28px rgba(23, 32, 51, 0.08);
+      }
+
+      .nav-button svg,
+      .settings-button svg {
+        display: block;
+      }
+
+      .nav-copy,
+      .settings-button-label {
+        text-align: left;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .nav-title,
+      .settings-button-label {
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+      }
+
+      .nav-meta {
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .settings-status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #d64545;
+        box-shadow: 0 0 0 4px rgba(214, 69, 69, 0.14);
+        justify-self: end;
+      }
+
+      .settings-status-dot.warning {
+        background: #d9822b;
+        box-shadow: 0 0 0 4px rgba(217, 130, 43, 0.14);
+      }
+
+      .settings-status-dot.ok {
+        background: #2f9e5b;
+        box-shadow: 0 0 0 4px rgba(47, 158, 91, 0.14);
+      }
+
+      .settings-user-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 10px;
+      }
+
+      .settings-user-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #17324d;
+      }
+
+      .settings-user-hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .auth-gate {
+        margin-bottom: 18px;
+      }
+
+      .auth-card {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .bridge-status-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .bridge-status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 5px 10px;
+        background: #edf2f7;
+        color: #425266;
+        font-weight: 700;
+      }
+
+      .bridge-status-chip::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #9aa7b7;
+      }
+
+      .bridge-status-chip.ok {
+        background: var(--ok-bg);
+        color: var(--ok-text);
+      }
+
+      .bridge-status-chip.ok::before {
+        background: #2f9e5b;
+      }
+
+      .bridge-status-chip.warning {
+        background: var(--warn-bg);
+        color: var(--warn-text);
+      }
+
+      .bridge-status-chip.warning::before {
+        background: #d9822b;
+      }
+
+      .toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 50;
+        max-width: min(420px, calc(100vw - 40px));
+        padding: 12px 14px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 18px 36px rgba(23, 32, 51, 0.12);
+        color: var(--ink);
+        font-size: 13px;
+        line-height: 1.5;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(8px);
+        transition: opacity 140ms ease, transform 140ms ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .toast.warning {
+        background: #fffaf2;
+        color: var(--warn-text);
+      }
+
+      .toast.error {
+        background: #fff2ef;
+        color: var(--danger-text);
+      }
+
+      .toast.success {
+        background: #eff8f2;
+        color: var(--ok-text);
+      }
+
+      .sidebar-bottom {
+        display: grid;
+        width: 100%;
+        align-content: end;
+        min-width: 0;
+      }
+
+      .settings-anchor {
+        position: relative;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .settings-layer {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: calc(100% + 8px);
+        min-width: 0;
+      }
+
+      .settings-layer.open {
+        display: block;
+      }
+
+      .main {
+        padding: clamp(14px, 2vw, 24px);
+        height: 100vh;
+        min-width: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+      }
+
+      .panel,
+      .settings-panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow);
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+
+      .workspace {
+        min-height: 100%;
+        min-width: 0;
+      }
+
+      .view {
+        display: none;
+        height: 100%;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .inbox-grid,
+      .calendar-grid,
+      .students-grid {
+        display: grid;
+        gap: 16px;
+        height: 100%;
+      }
+
+      .inbox-grid {
+        grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+      }
+
+      .calendar-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .students-grid {
+        grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+        height: calc(100vh - 96px);
+      }
+
+      .panel {
+        padding: clamp(14px, 1.6vw, 18px);
+        min-height: 0;
+        min-width: 0;
+      }
+
+      #calendar-panel {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 96px);
+        overflow: hidden;
+      }
+
+      .calendar-split {
+        --calendar-detail-width: 40%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 0;
+        height: 100%;
+        flex: 1 1 auto;
+        transition: grid-template-columns 180ms ease;
+      }
+
+      .calendar-split.has-detail {
+        grid-template-columns: minmax(0, calc(100% - var(--calendar-detail-width) - 10px)) 10px var(--calendar-detail-width);
+      }
+
+      .calendar-main-pane,
+      .calendar-detail-pane {
+        min-width: 0;
+        min-height: 0;
+      }
+
+      .calendar-main-pane {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-width: 0;
+        height: 100%;
+      }
+
+      .calendar-divider {
+        display: none;
+        cursor: col-resize;
+        position: relative;
+      }
+
+      .calendar-split.has-detail .calendar-divider {
+        display: block;
+      }
+
+      .calendar-divider::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 1px;
+        transform: translateX(-50%);
+        background: rgba(95, 107, 122, 0.16);
+      }
+
+      .calendar-divider::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 40px;
+        transform: translate(-50%, -50%);
+        border-radius: 999px;
+        background: rgba(95, 107, 122, 0.22);
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+
+      .panel-actions,
+      .button-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .range-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .range-controls input[type="date"] {
+        border: 1px solid rgba(95, 107, 122, 0.24);
+        border-radius: var(--radius-sm);
+        background: var(--surface-strong);
+        padding: 9px 10px;
+        color: var(--ink);
+      }
+
+      .range-separator {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      }
+
+      button.primary {
+        background: var(--accent);
+        color: #ffffff;
+        box-shadow: 0 10px 24px rgba(24, 53, 82, 0.18);
+      }
+
+      button.secondary {
+        background: var(--accent-soft);
+        color: var(--ink);
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .item-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .task-card,
+      .student-row,
+      .session-card,
+      .application-row {
+        padding: 14px;
+        border-radius: var(--radius-lg);
+        background: var(--surface-2);
+        border: 1px solid rgba(95, 107, 122, 0.14);
+      }
+
+      .task-card {
+        display: grid;
+        gap: 10px;
+      }
+
+      .task-top,
+      .student-row,
+      .application-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .reconciliation-row.expanded {
+        background: var(--surface-strong);
+      }
+
+      .reconciliation-main {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .reconciliation-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        width: 100%;
+      }
+
+      .reconciliation-copy {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .expand-button {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border-radius: 999px;
+        background: var(--surface-3);
+        color: var(--ink);
+        flex: 0 0 28px;
+        display: grid;
+        place-items: center;
+      }
+
+      .expand-button svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+        transition: transform 140ms ease;
+      }
+
+      .expand-button.expanded svg {
+        transform: rotate(180deg);
+      }
+
+      .task-title,
+      .student-name,
+      .application-title {
+        font-size: 16px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-start;
+        font-family: var(--font-ui-jp);
+        font-kerning: none;
+        font-variant-east-asian: normal;
+        font-feature-settings: "palt" 0, "pkna" 0;
+        letter-spacing: 0;
+        text-indent: 0;
+      }
+
+      .detail-card h3 {
+        display: flex;
+        align-items: baseline;
+        justify-content: flex-start;
+        font-family: var(--font-ui-jp);
+        font-kerning: none;
+        font-variant-east-asian: normal;
+        font-feature-settings: "palt" 0, "pkna" 0;
+        letter-spacing: 0;
+        text-indent: 0;
+      }
+
+      .name-track {
+        display: inline-flex;
+        align-items: baseline;
+        justify-content: flex-start;
+        gap: 0;
+        white-space: nowrap;
+      }
+
+      .name-char {
+        display: inline-flex;
+        align-items: baseline;
+        justify-content: flex-start;
+        width: 1em;
+        min-width: 1em;
+        flex: 0 0 1em;
+      }
+
+      .task-meta,
+      .student-meta,
+      .application-meta,
+      .muted {
+        color: var(--muted);
+      }
+
+      .task-meta,
+      .student-meta,
+      .application-meta {
+        font-size: 13px;
+      }
+
+      .metric-label {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        background: var(--accent-soft);
+        color: #425266;
+      }
+
+      .status-chip.submitted {
+        background: var(--ok-bg);
+        color: var(--ok-text);
+      }
+
+      .status-chip.draft {
+        background: var(--danger-bg);
+        color: var(--danger-text);
+      }
+
+      .status-chip.review {
+        background: var(--warn-bg);
+        color: var(--warn-text);
+      }
+
+      .status-chip.stale {
+        background: #e8dffb;
+        color: #6943b1;
+      }
+
+      .status-chip.upcoming {
+        background: var(--ok-bg);
+        color: var(--ok-text);
+      }
+
+      .status-chip.autofill_ready {
+        background: #dde8ef;
+        color: #16324f;
+      }
+
+      .status-chip.autofill_blocked {
+        background: #fff0dc;
+        color: #b86b13;
+      }
+
+      .status-chip.awaiting_user_submit {
+        background: #e8edf0;
+        color: #425266;
+      }
+
+      .status-chip.submitted_confirmed {
+        background: #dbe8f4;
+        color: #214463;
+      }
+
+      .status-chip.ignored {
+        background: #f1f4f7;
+        color: #607182;
+      }
+
+      .calendar-picker {
+        display: grid;
+        gap: 10px;
+      }
+
+      .calendar-option {
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: var(--radius-md);
+        background: var(--surface-2);
+        border: 1px solid rgba(95, 107, 122, 0.14);
+      }
+
+      .calendar-option input {
+        width: auto;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+      }
+
+      #calendar-shell {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .calendar-detail {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .calendar-detail-pane {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        padding-left: 12px;
+        min-width: 0;
+      }
+
+      .calendar-detail-pane.open {
+        display: flex;
+      }
+
+      .calendar-detail-head {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .calendar-detail-card {
+        display: grid;
+        gap: 14px;
+        min-height: 100%;
+        align-content: start;
+      }
+
+      .calendar-detail-summary {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .calendar-detail-copy {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .calendar-detail-date {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .calendar-detail-student {
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .calendar-detail-note,
+      .calendar-detail-reason,
+      .calendar-detail-meta {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .calendar-detail-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .calendar-detail-statuses {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .calendar-close-button {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-grid;
+        place-items: center;
+        background: transparent !important;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .fc {
+        min-width: 0;
+        height: 100%;
+      }
+
+      .fc .fc-toolbar {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .fc .fc-toolbar-title {
+        font-size: clamp(18px, 2vw, 24px);
+      }
+
+      .fc .fc-toolbar-chunk {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .fc .fc-button {
+        white-space: nowrap;
+      }
+
+      .fc .fc-daygrid-event,
+      .fc .fc-timegrid-event,
+      .fc .fc-list-event {
+        border-radius: 8px;
+        border-width: 1px;
+        box-shadow: none;
+      }
+
+      .fc .fc-daygrid-event .fc-event-main,
+      .fc .fc-timegrid-event .fc-event-main,
+      .fc .fc-list-event-title a,
+      .fc .fc-list-event-time {
+        color: #111111;
+      }
+
+      .fc .fc-daygrid-event .fc-event-main,
+      .fc .fc-timegrid-event .fc-event-main {
+        padding: 0;
+      }
+
+      .fc .fc-daygrid-event,
+      .fc .fc-timegrid-event {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .fc .fc-timegrid-event-harness {
+        margin-inline: 2px;
+      }
+
+      .fc .fc-daygrid-event-harness {
+        margin-top: 2px;
+      }
+
+      .gc-calendar-event {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        width: 100%;
+        min-width: 0;
+        padding: 3px 6px;
+        overflow: hidden;
+      }
+
+      .gc-calendar-event-time,
+      .gc-calendar-event-title {
+        color: #111111;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+
+      .gc-calendar-event-time {
+        flex: 0 0 auto;
+      }
+
+      .gc-calendar-event-title {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .fc .fc-daygrid-dot-event {
+        border-radius: 8px;
+        padding: 2px 6px;
+      }
+
+      .fc .fc-daygrid-dot-event:hover,
+      .fc .fc-daygrid-block-event:hover,
+      .fc .fc-timegrid-event:hover {
+        color: #111111;
+      }
+
+      .search-input {
+        width: 100%;
+        border: 1px solid rgba(95, 107, 122, 0.24);
+        border-radius: var(--radius-md);
+        background: var(--surface-strong);
+        padding: 11px 12px;
+      }
+
+      .student-list {
+        flex: 1 1 auto;
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+        overflow: auto;
+        min-height: 0;
+        padding-right: 4px;
+      }
+
+      .student-toolbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .student-row {
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .student-row.active {
+        background: var(--surface-strong);
+        border-color: var(--border-strong);
+      }
+
+      .detail-stack {
+        flex: 1 1 auto;
+        display: grid;
+        gap: 14px;
+        overflow: auto;
+        min-height: 0;
+        padding-right: 4px;
+      }
+
+      .detail-card {
+        padding: 16px;
+        border-radius: var(--radius-lg);
+        background: var(--surface-2);
+        border: 1px solid rgba(95, 107, 122, 0.14);
+      }
+
+      .detail-columns {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .detail-stat {
+        padding: 12px;
+        border-radius: var(--radius-md);
+        background: var(--surface-strong);
+        border: 1px solid rgba(95, 107, 122, 0.12);
+      }
+
+      .detail-stat-value {
+        margin-top: 4px;
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .reconciliation-detail {
+        display: grid;
+        gap: 10px;
+        padding-top: 6px;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .detail-subsection {
+        display: grid;
+        gap: 6px;
+      }
+
+      .detail-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .detail-list.compact {
+        display: grid;
+        gap: 2px;
+        padding-left: 0;
+        font-size: 12px;
+      }
+
+      .detail-form {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .detail-form-actions {
+        justify-content: flex-end;
+      }
+
+      .calendar-detail-actions {
+        margin-top: auto;
+        padding-top: 8px;
+      }
+
+      .student-list-panel,
+      .student-detail-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .student-row-meta {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        align-items: center;
+        text-align: right;
+      }
+
+      .student-overview-card {
+        display: grid;
+        grid-template-columns: minmax(240px, 0.9fr) minmax(300px, 1.1fr);
+        gap: 14px;
+      }
+
+      .student-summary-half,
+      .student-routine-half {
+        display: grid;
+        gap: 10px;
+      }
+
+      .student-create-card {
+        display: grid;
+        gap: 12px;
+      }
+
+      .student-create-head {
+        display: grid;
+        gap: 2px;
+      }
+
+      .student-create-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .student-create-field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .student-create-inline {
+        display: grid;
+        grid-template-columns: 52px 96px;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .student-create-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 2px;
+      }
+
+      .student-create-submit {
+        min-width: 132px;
+        border-radius: 12px;
+      }
+
+      .student-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .routine-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr) 52px 92px;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .inline-input {
+        border: 1px solid rgba(95, 107, 122, 0.24);
+        border-radius: var(--radius-sm);
+        background: var(--surface-strong);
+        padding: 8px 10px;
+        color: var(--ink);
+        min-width: 140px;
+        min-height: 44px;
+        height: 44px;
+      }
+
+      .inline-input-compact {
+        min-width: 52px;
+        width: 52px;
+        padding-inline: 0;
+        text-align: center;
+        text-align-last: center;
+      }
+
+      .inline-input-time {
+        min-width: 92px;
+        width: 92px;
+        padding-inline: 0;
+        text-align: center;
+      }
+
+      .routine-select-course {
+        min-width: 0;
+      }
+
+      .routine-select-teaching {
+        min-width: 0;
+      }
+
+      .routine-select-weekday {
+        justify-self: stretch;
+        text-align: center;
+        text-align-last: center;
+      }
+
+      .routine-time-input {
+        justify-self: stretch;
+      }
+
+      .student-header-edit {
+        display: grid;
+        gap: 8px;
+      }
+
+      .student-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        width: fit-content;
+        max-width: 100%;
+      }
+
+      .student-detail-name {
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .student-name-track {
+        justify-content: flex-start;
+      }
+
+      .student-name-input {
+        max-width: 280px;
+      }
+
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .icon-button svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+
+      .subtle-icon-button {
+        flex: 0 0 auto;
+        margin-left: 2px;
+      }
+
+      .detail-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        width: fit-content;
+        max-width: 100%;
+      }
+
+      .detail-title-input {
+        min-width: 0;
+        width: 100%;
+        max-width: 340px;
+      }
+
+      .routine-grid select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: none;
+        padding-right: 10px;
+      }
+
+      .student-create-inline select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: none;
+        padding-right: 0;
+      }
+
+      .application-filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 7px 11px;
+        background: var(--accent-soft);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .application-filter.active {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      .application-table {
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .task-body {
+        display: grid;
+        gap: 6px;
+        flex: 1 1 auto;
+        min-width: 0;
+        width: 100%;
+      }
+
+      .task-reason {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .reconciliation-head .status-chip {
+        flex: 0 0 auto;
+        align-self: flex-start;
+      }
+
+      .suggestion-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .suggestion-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba(95, 107, 122, 0.12);
+        background: rgba(248, 250, 252, 0.86);
+      }
+
+      .suggestion-item > div:first-child {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: left;
+      }
+
+      .suggestion-item.autofill-bundle-item.blocked {
+        background: rgba(255, 248, 235, 0.92);
+      }
+
+      .suggestion-item.autofill-bundle-item.mail-pending {
+        background: rgba(248, 250, 252, 0.86);
+      }
+
+      .suggestion-item .status-chip {
+        flex: 0 0 auto;
+        align-self: center;
+        white-space: nowrap;
+      }
+
+      .detail-inline-tools {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .source-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--accent-soft);
+        color: #425266;
+      }
+
+      .issue-chip.issue-schedule_change {
+        background: #fff1d8;
+        color: #b56400;
+      }
+
+      .issue-chip.issue-extra_thirty {
+        background: #eef6d8;
+        color: #517a18;
+      }
+
+      .issue-chip.issue-handoff {
+        background: #ece5ff;
+        color: #6849b8;
+      }
+
+      .issue-chip.issue-unmatched {
+        background: #f1f4f7;
+        color: #607182;
+      }
+
+      .source-chip.gmail {
+        background: #fff0dc;
+        color: #b86b13;
+      }
+
+      .source-chip.calendar {
+        background: #deefe4;
+        color: #1d6a3a;
+      }
+
+      .settings-panel {
+        position: static;
+        width: 100%;
+        max-width: 100%;
+        max-height: min(52vh, 560px);
+        overflow: auto;
+        overflow-x: hidden;
+        padding: 8px;
+        background: rgba(247, 249, 250, 0.96);
+        z-index: 20;
+        box-sizing: border-box;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .settings-head {
+        display: none;
+      }
+
+      .settings-stack {
+        display: grid;
+        gap: 5px;
+        min-width: 0;
+      }
+
+      .settings-fields {
+        display: grid;
+        gap: 6px;
+      }
+
+      .settings-block {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(95, 107, 122, 0.12);
+        border-radius: var(--radius-sm);
+        padding: 8px;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .settings-panel button.primary,
+      .settings-panel button.secondary {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      .service-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .service-title::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        flex: 0 0 7px;
+        border-radius: 999px;
+        background: #d64545;
+      }
+
+      .service-title.is-on::before {
+        background: #2f9e5b;
+      }
+
+      .service-stack {
+        display: grid;
+        gap: 6px;
+      }
+
+      .service-card {
+        display: grid;
+        gap: 6px;
+        padding: 8px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        border: 1px solid rgba(95, 107, 122, 0.14);
+      }
+
+      .service-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .service-card-action.is-off {
+        background: var(--danger-bg);
+        color: var(--danger-text);
+      }
+
+      .service-card-action.is-on {
+        background: #e8edf0;
+        color: var(--ink);
+      }
+
+      .service-help {
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+
+      .field-label {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .settings-panel input {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba(95, 107, 122, 0.3);
+        background: var(--surface-strong);
+        font-size: 12px;
+      }
+
+      .upload-note {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .settings-panel .muted {
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .account-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 6px;
+      }
+
+      .settings-calendar-picker {
+        display: grid;
+        gap: 6px;
+        margin-top: 6px;
+      }
+
+      .account-item {
+        display: grid;
+        gap: 4px;
+        padding: 7px 8px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        border: 1px solid rgba(95, 107, 122, 0.14);
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .account-primary,
+      .calendar-option-primary {
+        display: block;
+        min-width: 0;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .account-secondary,
+      .calendar-option-secondary {
+        display: block;
+        min-width: 0;
+        font-size: 11px;
+        line-height: 1.35;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .calendar-option > span:last-child {
+        min-width: 0;
+      }
+
+      .settings-toggle {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface-2);
+        color: var(--ink);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        min-width: 0;
+      }
+
+      .settings-inline-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .settings-actions {
+        margin-top: 8px;
+      }
+
+      .calendar-settings-actions {
+        margin-bottom: 6px;
+      }
+
+      .panel-fill {
+        height: 100%;
+      }
+
+      .settings-toggle-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .settings-toggle-chevron {
+        transition: transform 160ms ease;
+      }
+
+      .settings-block.expanded .settings-toggle-chevron {
+        transform: rotate(180deg);
+      }
+
+      .settings-collapsible {
+        display: none;
+        margin-top: 6px;
+        min-width: 0;
+      }
+
+      .settings-block.expanded .settings-collapsible {
+        display: block;
+      }
+
+      @media (max-width: 1240px) {
+        .inbox-grid,
+        .calendar-grid,
+        .students-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .students-grid {
+          height: auto;
+        }
+
+        .student-overview-card {
+          grid-template-columns: 1fr;
+        }
+
+        #calendar-panel {
+          min-height: 620px;
+        }
+
+        .calendar-split.has-detail {
+          grid-template-columns: 1fr;
+        }
+
+        .calendar-divider {
+          display: none !important;
+        }
+
+        .calendar-detail-pane {
+          border-top: 1px solid rgba(95, 107, 122, 0.12);
+          margin-top: 14px;
+          padding-top: 14px;
+          padding-left: 0;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .app-shell {
+          grid-template-columns: 208px minmax(0, 1fr);
+        }
+
+        .nav-button,
+        .settings-button {
+          padding: 10px 12px;
+          gap: 8px;
+        }
+
+        .detail-columns {
+          grid-template-columns: 1fr;
+        }
+
+        .task-top,
+        .application-row,
+        .reconciliation-head {
+          flex-direction: column;
+        }
+
+        .reconciliation-head .status-chip {
+          align-self: flex-start;
+        }
+      }
+
+      @media (max-width: 720px) {
+        body {
+          overflow: auto;
+        }
+
+        .app-shell {
+          grid-template-columns: 1fr;
+          height: auto;
+          min-height: 100vh;
+          overflow: visible;
+        }
+
+        .sidebar {
+          position: relative;
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+          height: auto;
+          overflow: visible;
+        }
+
+        .sidebar-top {
+          gap: 10px;
+        }
+
+        .sidebar-nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .sidebar-bottom {
+          position: static;
+        }
+
+        .settings-layer {
+          position: static;
+          margin-bottom: 8px;
+        }
+
+        .main {
+          padding: 16px;
+          height: auto;
+          overflow: visible;
+        }
+
+        .workspace {
+          min-height: auto;
+        }
+
+        .settings-panel {
+          position: static;
+          width: 100%;
+          max-height: none;
+        }
+
+        #calendar-panel {
+          min-height: 520px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .sidebar-nav {
+          grid-template-columns: 1fr;
+        }
+
+        .panel-actions,
+        .button-row {
+          width: 100%;
+        }
+
+        .application-filter {
+          flex: 1 1 auto;
+          justify-content: center;
+        }
+
+        .nav-title,
+        .settings-button-label {
+          white-space: normal;
+        }
+
+        .brand-mark {
+          width: 44px;
+          height: 44px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <div class="brand-mark" aria-label="GC Console">GC</div>
+
+          <nav class="sidebar-nav" aria-label="メイン">
+            <button class="nav-button" data-view="calendar" type="button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M8 3.5v3M16 3.5v3M4 9h16" stroke="currentColor" stroke-width="1.4"/>
+              </svg>
+              <span class="nav-copy">
+                <span class="nav-title">カレンダー</span>
+                <span id="nav-meta-calendar" class="nav-meta">0件</span>
+              </span>
+            </button>
+
+            <button class="nav-button" data-view="students" type="button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M4.5 18c.8-2.2 2.5-3.5 4.5-3.5S12.7 15.8 13.5 18" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M15 8h5M15 12h5M15 16h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              <span class="nav-copy">
+                <span class="nav-title">生徒</span>
+                <span id="nav-meta-students" class="nav-meta">0人</span>
+              </span>
+            </button>
+
+            <button class="nav-button active" data-view="applications" type="button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              <span class="nav-copy">
+                <span class="nav-title">申請</span>
+                <span id="nav-meta-applications" class="nav-meta">0件</span>
+              </span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="sidebar-bottom">
+          <div class="settings-anchor">
+            <button id="open-settings" class="settings-button" type="button" aria-label="設定" aria-expanded="false" aria-controls="settings-layer">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M10.3 2h3.4l.6 2.5c.4.1.8.3 1.2.5l2.3-1.2 2.4 2.4-1.2 2.3c.2.4.4.8.5 1.2l2.5.6v3.4l-2.5.6c-.1.4-.3.8-.5 1.2l1.2 2.3-2.4 2.4-2.3-1.2c-.4.2-.8.4-1.2.5l-.6 2.5h-3.4l-.6-2.5c-.4-.1-.8-.3-1.2-.5l-2.3 1.2-2.4-2.4 1.2-2.3c-.2-.4-.4-.8-.5-1.2L2 13.7v-3.4l2.5-.6c.1-.4.3-.8.5-1.2L3.8 6.2l2.4-2.4 2.3 1.2c.4-.2.8-.4 1.2-.5L10.3 2Z" stroke="currentColor" stroke-width="1.4"/>
+                <circle cx="12" cy="12" r="3.1" stroke="currentColor" stroke-width="1.4"/>
+              </svg>
+              <span class="settings-button-label">設定</span>
+              <span id="settings-status-dot" class="settings-status-dot" aria-hidden="true"></span>
+            </button>
+
+            <div id="settings-layer" class="settings-layer" aria-hidden="true">
+              <section class="settings-panel" role="dialog" aria-modal="true" aria-label="設定">
+                <div class="settings-stack">
+                <div class="settings-block">
+                  <div class="settings-user-meta">
+                    <div id="auth-user-summary" class="settings-user-name">未ログイン</div>
+                    <div id="auth-user-hint" class="settings-user-hint">Google ログインで本人データを読み込みます。</div>
+                  </div>
+                  <div class="field-label">あなたの設定</div>
+                  <div class="settings-fields">
+                    <input id="coach-name" type="text" placeholder="名前" />
+                    <input id="coach-code" type="text" placeholder="コード" />
+                    <input id="coach-email" type="email" placeholder="メール" />
+                  </div>
+                  <div class="button-row settings-actions">
+                    <button id="logout-button" class="secondary" type="button" hidden>ログアウト</button>
+                  </div>
+                </div>
+
+                <div class="settings-block">
+                  <div class="service-stack">
+                    <div id="gmail-service"></div>
+                    <div id="calendar-service"></div>
+                  </div>
+                </div>
+
+                <div id="fiscal-year-settings-block" class="settings-block">
+                  <button id="toggle-fiscal-year-settings" class="settings-toggle" type="button" aria-expanded="false">
+                    <span>表示年度</span>
+                    <span class="settings-inline-meta">
+                      <span id="fiscal-year-selection-summary" class="settings-toggle-meta">0件</span>
+                      <svg class="settings-toggle-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                  </button>
+                  <div class="settings-collapsible">
+                    <div id="settings-fiscal-year-picker" class="settings-calendar-picker"></div>
+                  </div>
+                </div>
+
+                <div id="calendar-settings-block" class="settings-block">
+                  <button id="toggle-calendar-settings" class="settings-toggle" type="button" aria-expanded="false">
+                    <span>表示カレンダー</span>
+                    <span class="settings-inline-meta">
+                      <span id="calendar-selection-summary" class="settings-toggle-meta">0件</span>
+                      <svg class="settings-toggle-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                  </button>
+                  <div class="settings-collapsible">
+                    <div class="button-row calendar-settings-actions">
+                      <button id="load-calendars" class="secondary">再読み込み</button>
+                    </div>
+                    <div id="settings-calendar-picker" class="settings-calendar-picker"></div>
+                  </div>
+                </div>
+
+                <div class="settings-block">
+                  <input id="oauth-json-file" type="file" accept="application/json,.json" hidden />
+                  <input id="credentials-path" type="text" placeholder="/absolute/path/to/google-oauth-client.json" />
+                  <div class="button-row settings-actions">
+                    <button id="pick-oauth-json" class="secondary">JSONを選ぶ</button>
+                    <button id="save-config" class="secondary">保存</button>
+                  </div>
+                  <div id="oauth-upload-note" class="upload-note"></div>
+                </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div id="auth-gate" class="auth-gate" hidden></div>
+        <section class="workspace">
+          <section id="view-calendar" class="view active">
+            <div class="calendar-grid">
+              <article id="calendar-panel" class="panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Events</p>
+                    <h3>Google Calendar</h3>
+                  </div>
+                </div>
+                <div id="calendar-split" class="calendar-split">
+                  <div class="calendar-main-pane">
+                    <div id="calendar-shell"></div>
+                  </div>
+                  <div id="calendar-divider" class="calendar-divider" aria-hidden="true"></div>
+                  <aside id="calendar-detail-pane" class="calendar-detail-pane" aria-hidden="true">
+                    <div class="calendar-detail-head">
+                      <button id="close-calendar-detail" class="secondary calendar-close-button" type="button" aria-label="閉じる">×</button>
+                    </div>
+                    <div id="calendar-record-detail" class="calendar-detail"></div>
+                  </aside>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="view-students" class="view">
+            <div class="students-grid">
+              <article class="panel student-list-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Students</p>
+                    <h3>生徒一覧</h3>
+                  </div>
+                </div>
+                <input id="student-search" class="search-input" type="search" placeholder="生徒名で検索" />
+                <div id="student-list" class="student-list"></div>
+              </article>
+
+              <article class="panel student-detail-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Detail</p>
+                    <h3>生徒詳細</h3>
+                  </div>
+                </div>
+                <div id="student-detail" class="detail-stack"></div>
+              </article>
+            </div>
+          </section>
+
+          <section id="view-applications" class="view">
+            <article class="panel panel-fill">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Applications</p>
+                  <h3>申請一覧</h3>
+                </div>
+                <div class="panel-actions">
+                  <div class="range-controls">
+                    <input id="applications-range-start" type="date" />
+                    <span class="range-separator">-</span>
+                    <input id="applications-range-end" type="date" />
+                  </div>
+                  <div id="application-filters" class="panel-actions"></div>
+                </div>
+              </div>
+              <div id="application-table" class="application-table"></div>
+            </article>
+          </section>
+        </section>
+      </main>
+      <div id="global-toast" class="toast" aria-live="polite"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,4 @@
+.local/
+dist/
+config/google-oauth-client.json
+tmp-debug-*.mjs
